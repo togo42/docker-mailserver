@@ -73,6 +73,7 @@ RUN apt-get update -q --fix-missing && \
     unzip \
     xz-utils \
     zoo \
+    less \
     && \
   curl https://packages.elasticsearch.org/GPG-KEY-elasticsearch | apt-key add - && \
   echo "deb http://packages.elastic.co/beats/apt stable main" | tee -a /etc/apt/sources.list.d/beats.list && \
