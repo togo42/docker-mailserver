@@ -30,6 +30,18 @@ Why I created this image: [Simple mail server with Docker](http://tvi.al/simple-
 
 Before you open an issue, please have a look this `README`, the [Wiki](https://github.com/tomav/docker-mailserver/wiki/) and Postfix/Dovecot documentation.
 
+## Requirements
+
+Recommended:
+- 1 CPU
+- 1GB RAM
+
+Minimum:
+- 1 CPU
+- 512MB RAM
+
+**Note:** You'll need to deactivate some services like ClamAV to be able to run on a host with 512MB of RAM.
+
 ## Usage
 
 #### Get latest image
@@ -256,6 +268,11 @@ Otherwise, `iptables` won't be able to ban IPs.
     - A second container for the ldap service is necessary (e.g. [docker-openldap](https://github.com/osixia/docker-openldap))
     - For preparing the ldap server to use in combination with this continer [this](http://acidx.net/wordpress/2014/06/installing-a-mailserver-with-postfix-dovecot-sasl-ldap-roundcube/) article may be helpful
 
+##### LDAP_START_TLS
+
+  - **empty** => no
+  - yes => LDAP over TLS enabled for Postfix
+
 ##### LDAP_SERVER_HOST
 
   - **empty** => mail.domain.com
@@ -291,6 +308,11 @@ Otherwise, `iptables` won't be able to ban IPs.
 
   - e.g. `"(&(mailAlias=%s)(mailEnabled=TRUE))"`
   - => Specify how ldap should be asked for aliases
+
+##### DOVECOT_TLS
+
+  - **empty** => no
+  - yes => LDAP over TLS enabled for Dovecot
 
 ##### DOVECOT_USER_FILTER
 
