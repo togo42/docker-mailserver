@@ -110,7 +110,7 @@ RUN sed -i -e 's/include_try \/usr\/share\/dovecot\/protocols\.d/include_try \/e
   sed -i -e 's/^.*lda_mailbox_autocreate.*/lda_mailbox_autocreate = yes/g' /etc/dovecot/conf.d/15-lda.conf && \
   sed -i -e 's/^.*lda_mailbox_autosubscribe.*/lda_mailbox_autosubscribe = yes/g' /etc/dovecot/conf.d/15-lda.conf && \
   sed -i -e 's/^.*postmaster_address.*/postmaster_address = '${POSTMASTER_ADDRESS:="postmaster@domain.com"}'/g' /etc/dovecot/conf.d/15-lda.conf && \
-  sed -i 's/#imap_idle_notify_interval = 2 mins/imap_idle_notify_interval = 29 mins/' /etc/dovecot/conf.d/20-imap.conf && \
+  sed -i 's/#imap_idle_notify_interval = 2 mins/imap_idle_notify_interval = 10 mins/' /etc/dovecot/conf.d/20-imap.conf && \
   # stretch-backport of dovecot needs this folder
   mkdir /etc/dovecot/ssl && \
   chmod 755 /etc/dovecot/ssl  && \
