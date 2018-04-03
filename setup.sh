@@ -61,6 +61,12 @@ SUBCOMMANDS:
     $0 config dkim <keysize> (default: 2048)
     $0 config ssl
 
+  relay:
+
+    $0 relay add-domain <domain> <host> [<port>]
+    $0 relay add-auth <domain> <username> [<password>]
+    $0 relay exclude-domain <domain>
+
   debug:
 
     $0 debug fetchmail
@@ -93,7 +99,7 @@ _docker_image() {
 
 _docker_container() {
   if [ -n "$CONTAINER_NAME" ]; then
-    docker exec -ti "$CONTAINER_NAME" $@
+    docker exec -ti "$CONTAINER_NAME" "$@"
   else
     echo "The docker-mailserver is not running!"
     exit 1
@@ -190,6 +196,27 @@ case $1 in
         ;;
       ssl)
         _docker_image generate-ssl-certificate
+        ;;
+      *)
+        _usage
+        ;;
+    esac
+    ;;
+
+  relay)
+    shift
+    case $1 in
+      add-domain)
+        shift
+        _docker_image addrelayhost $@
+        ;;
+      add-auth)
+        shift
+        _docker_image addsaslpassword $@
+        ;;
+      exclude-domain)
+        shift
+        _docker_image excluderelaydomain $@
         ;;
       *)
         _usage
