@@ -96,7 +96,7 @@ run:
 		-e PERMIT_DOCKER=network \
 		-e DMS_DEBUG=0 \
 		-e OVERRIDE_HOSTNAME=mail.my-domain.com \
-		-h mail.my-domain.com \
+		-h unknown.domain.tld \
 		-t $(NAME)
 	sleep 15
 	docker run -d --name mail_fail2ban \
@@ -222,6 +222,8 @@ run:
 
 generate-accounts-after-run:
 	docker run --rm -e MAIL_USER=added@localhost.localdomain -e MAIL_PASS=mypassword -t $(NAME) /bin/sh -c 'echo "$$MAIL_USER|$$(doveadm pw -s SHA512-CRYPT -u $$MAIL_USER -p $$MAIL_PASS)"' >> test/config/postfix-accounts.cf
+	docker exec mail addmailuser pass@localhost.localdomain 'may be \a `p^a.*ssword'
+
 	sleep 10
 
 fixtures:
