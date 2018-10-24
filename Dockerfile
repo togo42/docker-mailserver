@@ -1,5 +1,5 @@
 FROM debian:stretch-slim
-MAINTAINER Thomas VIAL
+LABEL maintainer="Thomas VIAL"
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV VIRUSMAILS_DELETE_DELAY=7
@@ -97,7 +97,7 @@ RUN apt-get update -q --fix-missing && \
   rm -f /etc/cron.weekly/fstrim && \
   rm -f /etc/postsrsd.secret
 
-RUN echo "0 0,6,12,18 * * * /usr/bin/freshclam --quiet" > /etc/cron.d/freshclam && \
+RUN echo "0 0,6,12,18 * * * /usr/bin/freshclam --quiet" > /etc/cron.d/clamav-freshclam && \
   chmod 644 /etc/clamav/freshclam.conf && \
   freshclam && \
   sed -i 's/Foreground false/Foreground true/g' /etc/clamav/clamd.conf && \
