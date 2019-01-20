@@ -63,7 +63,10 @@ Download the docker-compose.yml, the .env and the setup.sh files:
 #### Create a docker-compose environment
 
 - Edit the `.env` to your liking. Adapt this file with your FQDN.
-- Install [docker-compose](https://docs.docker.com/compose/) in the version `1.6` or higher.
+  - This file supports only simple `VAR=VAL` lines (see [Documentation](https://docs.docker.com/compose/env-file/)).
+  - Don't quote your values.
+  - Variable substitution is *not* supported (e.g. `OVERRIDE_HOSTNAME=$HOSTNAME.$DOMAINNAME`).
+- Install [docker-compose](https://docs.docker.com/compose/) in the version `1.7` or higher.
 
 #### Start Container
     docker-compose up -d mail
@@ -178,11 +181,12 @@ services:
       - LDAP_SEARCH_BASE=ou=people,dc=localhost,dc=localdomain
       - LDAP_BIND_DN=cn=admin,dc=localhost,dc=localdomain
       - LDAP_BIND_PW=admin
-      - LDAP_QUERY_FILTER_USER="(&(mail=%s)(mailEnabled=TRUE))"
-      - LDAP_QUERY_FILTER_GROUP="(&(mailGroupMember=%s)(mailEnabled=TRUE))"
-      - LDAP_QUERY_FILTER_ALIAS="(&(mailAlias=%s)(mailEnabled=TRUE))"
-      - DOVECOT_PASS_FILTER="(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))"
-      - DOVECOT_USER_FILTER="(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))"
+      - LDAP_QUERY_FILTER_USER=(&(mail=%s)(mailEnabled=TRUE))
+      - LDAP_QUERY_FILTER_GROUP=(&(mailGroupMember=%s)(mailEnabled=TRUE))
+      - LDAP_QUERY_FILTER_ALIAS=(&(mailAlias=%s)(mailEnabled=TRUE))
+      - LDAP_QUERY_FILTER_DOMAIN=(&(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))(mailEnabled=TRUE))
+      - DOVECOT_PASS_FILTER=(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))
+      - DOVECOT_USER_FILTER=(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))
       - ENABLE_SASLAUTHD=1
       - SASLAUTHD_MECHANISMS=ldap
       - SASLAUTHD_LDAP_SERVER=ldap
@@ -252,8 +256,9 @@ Otherwise, `iptables` won't be able to ban IPs.
   - **empty** => SSL disabled
   - letsencrypt => Enables Let's Encrypt certificates
   - custom => Enables custom certificates
-  - manual => Let's you manually specify locations of your SSL certificates for non-standard cases
+  - manual => Let you manually specify locations of your SSL certificates for non-standard cases
   - self-signed => Enables self-signed certificates
+  - _any other value_ => SSL required, settings by default
 
 Please read [the SSL page in the wiki](https://github.com/tomav/docker-mailserver/wiki/Configure-SSL) for more information.
 
@@ -440,18 +445,23 @@ Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`
 
 ##### LDAP_QUERY_FILTER_USER
 
-  - e.g. `"(&(mail=%s)(mailEnabled=TRUE))"`
+  - e.g. `(&(mail=%s)(mailEnabled=TRUE))`
   - => Specify how ldap should be asked for users
 
 ##### LDAP_QUERY_FILTER_GROUP
 
-  - e.g. `"(&(mailGroupMember=%s)(mailEnabled=TRUE))"`
+  - e.g. `(&(mailGroupMember=%s)(mailEnabled=TRUE))`
   - => Specify how ldap should be asked for groups
 
 ##### LDAP_QUERY_FILTER_ALIAS
 
-  - e.g. `"(&(mailAlias=%s)(mailEnabled=TRUE))"`
+  - e.g. `(&(mailAlias=%s)(mailEnabled=TRUE))`
   - => Specify how ldap should be asked for aliases
+
+##### LDAP_QUERY_FILTER_DOMAIN
+
+- e.g. `(&(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))(mailEnabled=TRUE))`
+- => Specify how ldap should be asked for domains
 
 ##### DOVECOT_TLS
 
@@ -460,13 +470,31 @@ Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`
 
 ## Dovecot
 
+The following variables overwrite the default values for ```/etc/dovecot/dovecot-ldap.conf.ext```.
+
 ##### DOVECOT_USER_FILTER
 
-  - e.g. `"(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))"`
+  - e.g. `(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))`
+
+##### DOVECOT_USER_ATTR
+
+ - e.g. `homeDirectory=home,qmailUID=uid,qmailGID=gid,mailMessageStore=mail`
+ - => Specify the directory to dovecot attribute mapping that fits your directory structure.
+ - Note: This is necessary for directories that do not use the [Postfix Book Schema](test/docker-openldap/bootstrap/schema/mmc/postfix-book.schema).
+ - Note: The left-hand value is the directory attribute, the right hand value is the dovecot variable.
+ - More details on the [Dovecot Wiki](https://wiki.dovecot.org/AuthDatabase/LDAP/Userdb)
 
 ##### DOVECOT_PASS_FILTER
 
-  - e.g. `"(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))"`
+  - e.g. `(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))`
+
+##### DOVECOT_PASS_ATTR
+
+- e.g. `uid=user,userPassword=password`
+- => Specify the directory to dovecot variable mapping that fits your directory structure.
+- Note: This is necessary for directories that do not use the [Postfix Book Schema](test/docker-openldap/bootstrap/schema/mmc/postfix-book.schema).
+- Note: The left-hand value is the directory attribute, the right hand value is the dovecot variable.
+- More details on the [Dovecot Wiki](https://wiki.dovecot.org/AuthDatabase/LDAP/PasswordLookups)
 
 ## Postgrey
 
@@ -484,6 +512,12 @@ Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 ##### POSTGREY_MAX_AGE
 
   - **35** => delete entries older than N days since the last time that they have been seen
+
+Note: This postgrey setting needs `ENABLE_POSTGREY=1`
+
+##### POSTGREY_AUTO_WHITELIST_CLIENTS
+
+  - **5** => whitelist host after N successful deliveries (N=0 to disable whitelisting)
 
 Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 
@@ -569,6 +603,13 @@ Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 
   - **empty** => Derived from OVERRIDE_HOSTNAME, DOMAINNAME, or the container's hostname
   - Set this if auto-detection fails, isn't what you want, or you wish to have a separate container handle DSNs
+
+## Default Relay Host
+
+#### DEFAULT_RELAY_HOST
+
+  - **empty** => don't set default relayhost setting in main.cf
+  - default host and port to relay all mail through
 
 ## Multi-domain Relay Hosts
 

@@ -220,6 +220,7 @@ run:
 		-e ENABLE_POSTGREY=1 \
 		-e POSTGREY_DELAY=15 \
 		-e POSTGREY_MAX_AGE=35 \
+		-e POSTGREY_AUTO_WHITELIST_CLIENTS=5 \
 		-e POSTGREY_TEXT="Delayed by postgrey" \
 		-e DMS_DEBUG=0 \
 		-h mail.my-domain.com -t $(NAME)
@@ -238,6 +239,15 @@ run:
 		-e RELAY_PORT=2525 \
 		-e RELAY_USER=smtp_user \
 		-e RELAY_PASSWORD=smtp_password \
+		--cap-add=SYS_PTRACE \
+		-e PERMIT_DOCKER=host \
+		-e DMS_DEBUG=0 \
+		-h mail.my-domain.com -t $(NAME)
+	sleep 15
+	docker run -d --name mail_with_default_relay \
+		-v "`pwd`/test/config/relay-hosts":/tmp/docker-mailserver \
+		-v "`pwd`/test":/tmp/docker-mailserver-test \
+		-e DEFAULT_RELAY_HOST=default.relay.host.invalid:25 \
 		--cap-add=SYS_PTRACE \
 		-e PERMIT_DOCKER=host \
 		-e DMS_DEBUG=0 \
@@ -308,7 +318,8 @@ clean:
 		mail_override_hostname \
 		mail_domainname \
 		mail_srs_domainname \
-		mail_with_relays
+		mail_with_relays \
+		mail_with_default_relay
 
 	@if [ -d config.bak ]; then\
 		rm -rf config ;\
