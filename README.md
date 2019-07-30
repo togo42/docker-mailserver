@@ -81,9 +81,10 @@ Download the docker-compose.yml, the .env and the setup.sh files:
 
 Now the keys are generated, you can configure your DNS server by just pasting the content of `config/opendkim/keys/domain.tld/mail.txt` in your `domain.tld.hosts` zone.
 
-#### Restart the container
+#### Restart and update the container
 
     docker-compose down
+    docker pull tvial/docker-mailserver:latest
     docker-compose up -d mail
 
 You're done!
@@ -123,24 +124,24 @@ services:
     domainname: domain.com
     container_name: mail
     ports:
-    - "25:25"
-    - "143:143"
-    - "587:587"
-    - "993:993"
+      - "25:25"
+      - "143:143"
+      - "587:587"
+      - "993:993"
     volumes:
-    - maildata:/var/mail
-    - mailstate:/var/mail-state
-    - ./config/:/tmp/docker-mailserver/
+      - maildata:/var/mail
+      - mailstate:/var/mail-state
+      - ./config/:/tmp/docker-mailserver/
     environment:
-    - ENABLE_SPAMASSASSIN=1
-    - ENABLE_CLAMAV=1
-    - ENABLE_FAIL2BAN=1
-    - ENABLE_POSTGREY=1
-    - ONE_DIR=1
-    - DMS_DEBUG=0
+      - ENABLE_SPAMASSASSIN=1
+      - ENABLE_CLAMAV=1
+      - ENABLE_FAIL2BAN=1
+      - ENABLE_POSTGREY=1
+      - ONE_DIR=1
+      - DMS_DEBUG=0
     cap_add:
-    - NET_ADMIN
-    - SYS_PTRACE
+      - NET_ADMIN
+      - SYS_PTRACE
 
 volumes:
   maildata:
@@ -183,8 +184,8 @@ services:
       - LDAP_BIND_PW=admin
       - LDAP_QUERY_FILTER_USER=(&(mail=%s)(mailEnabled=TRUE))
       - LDAP_QUERY_FILTER_GROUP=(&(mailGroupMember=%s)(mailEnabled=TRUE))
-      - LDAP_QUERY_FILTER_ALIAS=(&(mailAlias=%s)(mailEnabled=TRUE))
-      - LDAP_QUERY_FILTER_DOMAIN=(&(|(mail=*@%s)(mailalias=*@%s)(mailGroupMember=*@%s))(mailEnabled=TRUE))
+      - LDAP_QUERY_FILTER_ALIAS=(|(&(mailAlias=%s)(objectClass=PostfixBookMailForward))(&(mailAlias=%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE)))
+      - LDAP_QUERY_FILTER_DOMAIN=(|(&(mail=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&(mailGroupMember=*@%s)(objectClass=PostfixBookMailAccount)(mailEnabled=TRUE))(&(mailalias=*@%s)(objectClass=PostfixBookMailForward)))
       - DOVECOT_PASS_FILTER=(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))
       - DOVECOT_USER_FILTER=(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))
       - ENABLE_SASLAUTHD=1
@@ -415,7 +416,7 @@ Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`
   - 1 => LDAP authentification is enabled
   - NOTE:
     - A second container for the ldap service is necessary (e.g. [docker-openldap](https://github.com/osixia/docker-openldap))
-    - For preparing the ldap server to use in combination with this continer [this](http://acidx.net/wordpress/2014/06/installing-a-mailserver-with-postfix-dovecot-sasl-ldap-roundcube/) article may be helpful
+    - For preparing the ldap server to use in combination with this container [this](http://acidx.net/wordpress/2014/06/installing-a-mailserver-with-postfix-dovecot-sasl-ldap-roundcube/) article may be helpful
 
 ##### LDAP_START_TLS
 
@@ -560,7 +561,7 @@ Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 ##### SASLAUTHD_LDAP_BIND_DN
 
   - empty => anonymous bind
-  - specify an object with priviliges to search the directory tree
+  - specify an object with privileges to search the directory tree
   - e.g. active directory: SASLAUTHD_LDAP_BIND_DN=cn=Administrator,cn=Users,dc=mydomain,dc=net
   - e.g. openldap: SASLAUTHD_LDAP_BIND_DN=cn=admin,dc=mydomain,dc=net
 
@@ -589,7 +590,7 @@ Note: This postgrey setting needs `ENABLE_POSTGREY=1`
 ##### SRS_EXCLUDE_DOMAINS
 
   - **empty** => Envelope sender will be rewritten for all domains
-  - provide comma seperated list of domains to exclude from rewriting
+  - provide comma separated list of domains to exclude from rewriting
 
 ##### SRS_SECRET
 
