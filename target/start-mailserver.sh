@@ -1387,11 +1387,11 @@ function _setup_logrotate() {
 	case "$REPORT_INTERVAL" in
 		"daily" )
 			notify 'inf' "Setting postfix summary interval to daily"
-			LOGROTATE="$LOGROTATE  rotate 1\n  daily\n"
+			LOGROTATE="$LOGROTATE  rotate 30\n  daily\n"
 			;;
 		"weekly" )
 			notify 'inf' "Setting postfix summary interval to weekly"
-			LOGROTATE="$LOGROTATE  rotate 1\n  weekly\n"
+			LOGROTATE="$LOGROTATE  rotate 4\n  weekly\n"
 			;;
 		"monthly" )
 			notify 'inf' "Setting postfix summary interval to monthly"
