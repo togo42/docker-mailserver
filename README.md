@@ -9,24 +9,25 @@ Easy to deploy and upgrade.
 
 Includes:
 
-- postfix with smtp or ldap auth
-- dovecot for sasl, imap (and optional pop3) with ssl support, with ldap auth
+- [Postfix](http://www.postfix.org) with smtp or ldap auth
+- [Dovecot](https://www.dovecot.org) for sasl, imap (and optional pop3) with ssl support, with ldap auth
+  - Dovecot is installed from the [Dovecot Community Repo](https://wiki2.dovecot.org/PrebuiltBinaries)
 - saslauthd with ldap auth
-- [amavis](https://www.amavis.org/)
-- [spamassasin](http://spamassassin.apache.org/) supporting custom rules
-- [clamav](https://www.clamav.net/) with automatic updates
-- opendkim
-- opendmarc
-- [fail2ban](https://www.fail2ban.org/wiki/index.php/Main_Page)
-- [fetchmail](http://www.fetchmail.info/fetchmail-man.html)
-- [postscreen](http://www.postfix.org/POSTSCREEN_README.html)
-- [postgrey](https://postgrey.schweikert.ch/)
-- basic [sieve support](https://github.com/tomav/docker-mailserver/wiki/Configure-Sieve-filters) using dovecot
+- [Amavis](https://www.amavis.org/)
+- [Spamassasin](http://spamassassin.apache.org/) supporting custom rules
+- [ClamAV](https://www.clamav.net/) with automatic updates
+- [OpenDKIM](http://www.opendkim.org)
+- [OpenDMARC](https://github.com/trusteddomainproject/OpenDMARC)
+- [Fail2ban](https://www.fail2ban.org/wiki/index.php/Main_Page)
+- [Fetchmail](http://www.fetchmail.info/fetchmail-man.html)
+- [Postscreen](http://www.postfix.org/POSTSCREEN_README.html)
+- [Postgrey](https://postgrey.schweikert.ch/)
+- basic [Sieve support](https://github.com/tomav/docker-mailserver/wiki/Configure-Sieve-filters) using dovecot
 - [LetsEncrypt](https://letsencrypt.org/) and self-signed certificates
-- [setup script](https://github.com/tomav/docker-mailserver/wiki/Setup-docker-mailserver-using-the-script-setup.sh) to easily configure and maintain your mailserver
+- [Setup script](https://github.com/tomav/docker-mailserver/wiki/Setup-docker-mailserver-using-the-script-setup.sh) to easily configure and maintain your mailserver
 - persistent data and state (but think about backups!)
-- [integration tests](https://travis-ci.org/tomav/docker-mailserver)
-- [automated builds on docker hub](https://hub.docker.com/r/tvial/docker-mailserver/)
+- [Integration tests](https://travis-ci.org/tomav/docker-mailserver)
+- [Automated builds on docker hub](https://hub.docker.com/r/tvial/docker-mailserver/)
 
 Why I created this image: [Simple mail server with Docker](http://tvi.al/simple-mail-server-with-docker/)
 
@@ -285,7 +286,8 @@ Enables the Sender Rewriting Scheme. SRS is needed if your mail server acts as f
 Set different options for mynetworks option (can be overwrite in postfix-main.cf)
   - **empty** => localhost only
   - host => Add docker host (ipv4 only)
-  - network => Add all docker containers (ipv4 only)
+  - network => Add the docker default bridge network (172.16.0.0/12); **WARNING**: `docker-compose` might use others (e.g. 192.168.0.0/16) use `PERMIT_DOCKER=connected-networks` in this case
+  - connected-networks => Add all connected docker networks (ipv4 only)
 
 ##### VIRUSMAILS_DELETE_DELAY
 
@@ -391,7 +393,7 @@ Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`
 
   - **6.31** => triggers spam evasive actions
 
-Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`
+Note: this spamassassin setting needs `ENABLE_SPAMASSASSIN=1`. By default, the mailserver is configured to quarantine spam emails. If emails are quarantined, they are compressed and stored in a location dependent on the ONE_DIR setting above. If `ONE_DIR=1` the location is /var/mail-state/lib-amavis/virusmails/. If `ONE_DIR=0` it is /var/lib/amavis/virusmails/. These paths are inside the docker container. To inhibit this behaviour and deliver spam emails, set this to a very high value e.g. 100.0.
 
 ##### SA_SPAM_SUBJECT
 
@@ -477,7 +479,7 @@ The following variables overwrite the default values for ```/etc/dovecot/dovecot
 
   - e.g. `(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))`
 
-##### DOVECOT_USER_ATTR
+##### DOVECOT_USER_ATTRS
 
  - e.g. `homeDirectory=home,qmailUID=uid,qmailGID=gid,mailMessageStore=mail`
  - => Specify the directory to dovecot attribute mapping that fits your directory structure.
@@ -489,7 +491,7 @@ The following variables overwrite the default values for ```/etc/dovecot/dovecot
 
   - e.g. `(&(objectClass=PostfixBookMailAccount)(uniqueIdentifier=%n))`
 
-##### DOVECOT_PASS_ATTR
+##### DOVECOT_PASS_ATTRS
 
 - e.g. `uid=user,userPassword=password`
 - => Specify the directory to dovecot variable mapping that fits your directory structure.
